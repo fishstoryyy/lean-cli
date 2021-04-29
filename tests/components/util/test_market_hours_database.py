@@ -17,7 +17,7 @@ from unittest import mock
 import pytest
 
 from lean.components.util.market_hours_database import MarketHoursDatabase
-from lean.models.api import QCSecurityType
+from lean.models.data import SecurityType
 
 
 @pytest.fixture(autouse=True)
@@ -230,7 +230,7 @@ def test_get_entry_returns_entry_scoped_to_symbol() -> None:
     lean_config_manager.get_data_directory.return_value = Path.cwd() / "data"
 
     market_hours_database = MarketHoursDatabase(lean_config_manager)
-    entry = market_hours_database.get_entry(QCSecurityType.CFD, "fxcm", "AU200AUD")
+    entry = market_hours_database.get_entry(SecurityType.CFD, "fxcm", "AU200AUD")
 
     assert len(entry.monday) > 0
     assert len(entry.tuesday) > 0
@@ -248,7 +248,7 @@ def test_get_entry_returns_entry_scoped_to_wildcard() -> None:
     lean_config_manager.get_data_directory.return_value = Path.cwd() / "data"
 
     market_hours_database = MarketHoursDatabase(lean_config_manager)
-    entry = market_hours_database.get_entry(QCSecurityType.CFD, "fxcm", "XXXXXX")
+    entry = market_hours_database.get_entry(SecurityType.CFD, "fxcm", "XXXXXX")
 
     assert len(entry.monday) > 0
     assert len(entry.tuesday) > 0
@@ -268,4 +268,4 @@ def test_get_entry_raises_if_entry_does_not_exist() -> None:
     market_hours_database = MarketHoursDatabase(lean_config_manager)
 
     with pytest.raises(Exception):
-        market_hours_database.get_entry(QCSecurityType.CFD, "fake-market", "XXXXXX")
+        market_hours_database.get_entry(SecurityType.CFD, "fake-market", "XXXXXX")

@@ -22,7 +22,7 @@ from rich.table import Table
 from lean.click import DateParameter, LeanCommand
 from lean.container import container
 from lean.models.api import QCResolution
-from lean.models.data import DataType, Product, SecurityDataProduct, SecurityType
+from lean.models.data import DataType, OptionStyle, Product, SecurityDataProduct, SecurityType
 from lean.models.errors import MoreInfoError
 from lean.models.logger import Option
 
@@ -40,9 +40,13 @@ def _display_products(products: List[Product]) -> None:
             product.price = randint(10, 10000)
             product.purchased = randint(0, 100) < 10
 
-        if isinstance(product, SecurityDataProduct) and product.start_date is None:
-            product.start_date = datetime(2000, 1, 1)
-            product.end_date = datetime.now()
+        if isinstance(product, SecurityDataProduct):
+            if product.start_date is None:
+                product.start_date = datetime(2000, 1, 1)
+                product.end_date = datetime.now()
+
+            if product.security_type == SecurityType.FutureOption and product.expiry_dates_by_data_date is None:
+                product.expiry_dates_by_data_date = {}
 
     security_data_products = [p for p in products if isinstance(p, SecurityDataProduct)]
     subscription_products = [p for p in products if not isinstance(p, SecurityDataProduct)]
@@ -125,8 +129,15 @@ def _select_products() -> List[Product]:
             ])
 
             logger.info(
-                f"Browse the available data at https://www.quantconnect.com/data/tree/{security_type.get_internal_name()}/{market.lower()}/{resolution.value.lower()}")
+                f"Browse the available data at https://www.quantconnect.com/data/tree/{security_type.get_internal_name().lower()}/{market.lower()}/{resolution.value.lower()}")
             ticker = click.prompt("Enter the ticker of the data")
+
+            if security_type in [SecurityType.EquityOption, SecurityType.FutureOption, SecurityType.IndexOption]:
+                option_style = click.prompt("Select the option style of the data", [
+                    Option(value=s, label=s.value) for s in OptionStyle.__members__.values()
+                ])
+            else:
+                option_style = None
 
             if resolution != QCResolution.Hour and resolution != QCResolution.Daily:
                 start_date = click.prompt("Start date of the data (yyyyMMdd, leave empty to select all available data)",
@@ -154,7 +165,9 @@ def _select_products() -> List[Product]:
                                                 resolution=resolution,
                                                 ticker=ticker,
                                                 start_date=start_date,
-                                                end_date=end_date))
+                                                end_date=end_date,
+                                                option_style=option_style,
+                                                expiry_dates_by_data_date=None))
 
             # Equity data requires a map and factor files subscription
             if security_type == SecurityType.Equity and not any([p.data_type == DataType.MapFactor for p in products]):
@@ -232,21 +245,9 @@ def _process_payment(products: List[Product]) -> None:
     logger.info("TODO: Process payment using new API")
 
 
-def _download_products(products: List[Product]) -> None:
-    """Downloads the selected products to the local data directory.
-
-    Asks for permission before overwriting existing files.
-
-    :param products: the list of products selected by the user
-    """
-    # TODO: Download data using new API
-    logger = container.logger()
-    logger.info(f"TODO: Convert selected products to list of data files to download")
-    logger.info(f"TODO: Download selected data using new API")
-
-
 @click.command(cls=LeanCommand, requires_lean_config=True)
-def download() -> None:
+@click.option("--overwrite", is_flag=True, default=False, help="Overwrite existing local data")
+def download(overwrite: bool) -> None:
     """Purchase and download data from QuantConnect's Data Library.
 
     An interactive wizard will show to walk you through the process of selecting data,
@@ -259,6 +260,8 @@ def download() -> None:
     https://www.quantconnect.com/data/tree
     """
     products = _select_products()
+
     _confirm_distribution_agreements(products)
     _process_payment(products)
-    _download_products(products)
+
+    container.data_downloader().download_products(products, overwrite)

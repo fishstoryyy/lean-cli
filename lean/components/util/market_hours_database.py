@@ -15,8 +15,7 @@ import json
 from typing import Dict
 
 from lean.components.config.lean_config_manager import LeanConfigManager
-from lean.models.api import QCSecurityType
-from lean.models.data import MarketHoursDatabaseEntry
+from lean.models.data import MarketHoursDatabaseEntry, SecurityType
 
 
 class MarketHoursDatabase:
@@ -29,7 +28,7 @@ class MarketHoursDatabase:
         """
         self._lean_config_manager = lean_config_manager
 
-    def get_entry(self, security_type: QCSecurityType, market: str, ticker: str) -> MarketHoursDatabaseEntry:
+    def get_entry(self, security_type: SecurityType, market: str, ticker: str) -> MarketHoursDatabaseEntry:
         """Reads the market hours database and returns the entry for the given data.
 
         An error is raised if the market hours database does not contain an entry matching the given data.
@@ -41,7 +40,8 @@ class MarketHoursDatabase:
         """
         entries = self._get_all_entries()
 
-        keys_to_check = [f"{security_type.value}-{market}-{ticker.upper()}", f"{security_type.value}-{market}-[*]"]
+        type_name = security_type.get_internal_name()
+        keys_to_check = [f"{type_name}-{market.lower()}-{ticker.upper()}", f"{type_name}-{market.lower()}-[*]"]
 
         for key in keys_to_check:
             if key in entries:
