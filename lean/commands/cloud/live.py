@@ -50,9 +50,9 @@ def _prompt_notification_method() -> QCNotificationMethod:
     :return: the notification method configured by the user
     """
     logger = container.logger()
-    selected_method = logger.prompt_list("Select a notification method", [Option(id="email", label="Email"),
-                                                                          Option(id="webhook", label="Webhook"),
-                                                                          Option(id="sms", label="SMS")])
+    selected_method = logger.prompt_list("Select a notification method", [Option(value="email", label="Email"),
+                                                                          Option(value="webhook", label="Webhook"),
+                                                                          Option(value="sms", label="SMS")])
 
     if selected_method == "email":
         address = click.prompt("Email address")
@@ -119,7 +119,7 @@ def live(project: str, push: bool, open_browser: bool) -> None:
         CoinbaseProBrokerage()
     ]
 
-    brokerage_options = [Option(id=brokerage, label=brokerage.name) for brokerage in brokerages]
+    brokerage_options = [Option(value=brokerage, label=brokerage.name) for brokerage in brokerages]
 
     brokerage: CloudBrokerage = logger.prompt_list("Select a brokerage", brokerage_options)
     brokerage_settings = brokerage.get_settings(logger)
@@ -133,7 +133,7 @@ def live(project: str, push: bool, open_browser: bool) -> None:
         raise RuntimeError(
             "You don't have any live nodes available, you can manage your nodes on https://www.quantconnect.com/terminal/#organization/resources")
 
-    node_options = [Option(id=node, label=f"{node.name} - {node.description}") for node in nodes.live]
+    node_options = [Option(value=node, label=f"{node.name} - {node.description}") for node in nodes.live]
     node: QCNode = logger.prompt_list("Select a node", node_options)
 
     logger.info(

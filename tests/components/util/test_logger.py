@@ -76,9 +76,9 @@ def test_progress_creates_started_progress_instance(capsys: CaptureFixture) -> N
 
 
 @mock.patch("click.prompt")
-def test_prompt_list_returns_id_of_selected_option(prompt: mock.Mock, capsys: CaptureFixture) -> None:
+def test_prompt_list_returns_value_of_selected_option(prompt: mock.Mock, capsys: CaptureFixture) -> None:
     logger = Logger()
-    options = [Option(id=1, label="Option 1"), Option(id=2, label="Option 2"), Option(id=3, label="Option 3")]
+    options = [Option(value=1, label="Option 1"), Option(value=2, label="Option 2"), Option(value=3, label="Option 3")]
 
     prompt.return_value = 3
     selected_option = logger.prompt_list("Select an option", options)
@@ -91,7 +91,7 @@ def test_prompt_list_returns_id_of_selected_option(prompt: mock.Mock, capsys: Ca
 @mock.patch("click.prompt")
 def test_prompt_list_displays_all_options(prompt: mock.Mock, capsys: CaptureFixture) -> None:
     logger = Logger()
-    options = [Option(id=1, label="Option 1"), Option(id=2, label="Option 2"), Option(id=3, label="Option 3")]
+    options = [Option(value=1, label="Option 1"), Option(value=2, label="Option 2"), Option(value=3, label="Option 3")]
 
     prompt.return_value = 3
     logger.prompt_list("Select an option", options)
@@ -104,7 +104,7 @@ def test_prompt_list_displays_all_options(prompt: mock.Mock, capsys: CaptureFixt
 
 def test_prompt_returns_single_option_without_prompting(capsys: CaptureFixture) -> None:
     logger = Logger()
-    options = [Option(id=1, label="Option 1")]
+    options = [Option(value=1, label="Option 1")]
 
     selected_option = logger.prompt_list("Select an option", options)
 

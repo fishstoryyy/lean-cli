@@ -18,5 +18,5 @@ from lean.models.pydantic import WrappedBaseModel
 
 class Option(WrappedBaseModel):
     """The Option class represents a choosable option with an internal id and a display-friendly label."""
-    id: Any
+    value: Any
     label: str

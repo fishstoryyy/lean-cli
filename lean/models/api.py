@@ -312,13 +312,15 @@ class QCOrganization(WrappedBaseModel):
 
 
 class QCSecurityType(str, Enum):
+    CFD = "Cfd"
+    Crypto = "Crypto"
     Equity = "Equity"
     Forex = "Forex"
-    CFD = "Cfd"
     Future = "Future"
-    Crypto = "Crypto"
-    Option = "Option"
     FutureOption = "FutureOption"
+    Index = "Index"
+    IndexOption = "IndexOption"
+    Option = "Option"
 
 
 class QCResolution(str, Enum):

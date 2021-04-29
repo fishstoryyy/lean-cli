@@ -85,12 +85,12 @@ class OptimizerConfigManager:
         :return: the class name of the optimization strategy to use
         """
         options = [
-            Option(id="QuantConnect.Optimizer.Strategies.GridSearchOptimizationStrategy", label="Grid Search")
+            Option(value="QuantConnect.Optimizer.Strategies.GridSearchOptimizationStrategy", label="Grid Search")
         ]
 
         if not cloud:
             options.append(
-                Option(id="QuantConnect.Optimizer.Strategies.EulerSearchOptimizationStrategy", label="Euler Search")
+                Option(value="QuantConnect.Optimizer.Strategies.EulerSearchOptimizationStrategy", label="Euler Search")
             )
 
         return self._logger.prompt_list("Select the optimization strategy to use", options)
@@ -103,7 +103,7 @@ class OptimizerConfigManager:
         # Create a list of options containing a "<target> (min)" and "<target> (max)" option for every target
         options = list(itertools.product(self.available_targets,
                                          [OptimizationExtremum.Minimum, OptimizationExtremum.Maximum]))
-        options = [Option(id=OptimizationTarget(target=option[0][0], extremum=option[1]),
+        options = [Option(value=OptimizationTarget(target=option[0][0], extremum=option[1]),
                           label=f"{option[0][1]} ({option[1]})") for option in options]
 
         return self._logger.prompt_list("Select an optimization target", options)
@@ -152,16 +152,16 @@ class OptimizerConfigManager:
             if not click.confirm("Do you want to add a constraint?", default=False):
                 return results
 
-            target_options = [Option(id=target[0], label=target[1]) for target in self.available_targets]
+            target_options = [Option(value=target[0], label=target[1]) for target in self.available_targets]
             target = self._logger.prompt_list("Select a constraint target", target_options)
 
             operator = self._logger.prompt_list("Select a constraint operator (<value> will be asked after this)", [
-                Option(id=OptimizationConstraintOperator.Less, label="Less than <value>"),
-                Option(id=OptimizationConstraintOperator.LessOrEqual, label="Less than or equal to <value>"),
-                Option(id=OptimizationConstraintOperator.Greater, label="Greater than <value>"),
-                Option(id=OptimizationConstraintOperator.GreaterOrEqual, label="Greater than or equal to <value>"),
-                Option(id=OptimizationConstraintOperator.Equals, label="Equal to <value>"),
-                Option(id=OptimizationConstraintOperator.NotEqual, label="Not equal to <value>")
+                Option(value=OptimizationConstraintOperator.Less, label="Less than <value>"),
+                Option(value=OptimizationConstraintOperator.LessOrEqual, label="Less than or equal to <value>"),
+                Option(value=OptimizationConstraintOperator.Greater, label="Greater than <value>"),
+                Option(value=OptimizationConstraintOperator.GreaterOrEqual, label="Greater than or equal to <value>"),
+                Option(value=OptimizationConstraintOperator.Equals, label="Equal to <value>"),
+                Option(value=OptimizationConstraintOperator.NotEqual, label="Not equal to <value>")
             ])
 
             value = click.prompt("Set the <value> for the selected operator", type=click.FLOAT)
@@ -174,7 +174,8 @@ class OptimizerConfigManager:
         :return: the type of the node and the amount of parallel nodes to run
         """
         node_options = [
-            Option(id=node, label=f"{node.name} ({node.cores} cores, {node.ram} GB RAM) @ ${node.price:.2f} per hour")
+            Option(value=node,
+                   label=f"{node.name} ({node.cores} cores, {node.ram} GB RAM) @ ${node.price:,.2f} per hour")
             for node in self._available_nodes
         ]
 

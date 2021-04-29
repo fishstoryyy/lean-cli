@@ -77,14 +77,14 @@ class Logger:
 
         :param text: the text to display before prompting
         :param options: the available options
-        :return: the chosen option's id
+        :return: the chosen option's value
         """
         if len(options) == 1:
-            return options[0].id
+            return options[0].value
 
         self.info(f"{text}:")
         for i, option in enumerate(options):
             self.info(f"{i + 1}) {option.label}")
 
         number = click.prompt("Enter a number", type=click.IntRange(min=1, max=len(options)))
-        return options[number - 1].id
+        return options[number - 1].value
