@@ -196,7 +196,7 @@ def test_security_type_get_resolutions_returns_available_resolutions(security_ty
     (SecurityType.IndexOption, DataType.OpenInterest, QCResolution.Hour, "USA", "SPX", OptionStyle.European, "indexoption/usa/hour/spx_openinterest_european.zip"),
     (SecurityType.IndexOption, DataType.Trade, QCResolution.Daily, "USA", "SPX", OptionStyle.European, "indexoption/usa/daily/spx_trade_european.zip"),
     (SecurityType.IndexOption, DataType.Quote, QCResolution.Daily, "USA", "SPX", OptionStyle.European, "indexoption/usa/daily/spx_quote_european.zip"),
-    (SecurityType.IndexOption, DataType.OpenInterest, QCResolution.Daily, "USA", "SPX", OptionStyle.European, "indexoption/usa/daily/spx_openinterest_european.zip"),
+    (SecurityType.IndexOption, DataType.OpenInterest, QCResolution.Daily, "USA", "SPX", OptionStyle.European, "indexoption/usa/daily/spx_openinterest_european.zip")
     # @formatter:on
 ])
 def test_security_data_product_get_relative_path_returns_correct_path(security_type: SecurityType,

@@ -48,27 +48,31 @@ class DataDownloader:
         self._market_hours_database = market_hours_database
         self._force_overwrite = None
 
-    def download_products(self, products: List[Product], overwrite: bool) -> None:
+    def download_products(self, products: List[Product], overwrite_flag: bool) -> None:
         """Downloads a list of products.
 
         :param products: the products to download
-        :param overwrite: True if existing local files should be overwritten, False if not
+        :param overwrite_flag: whether the user has given permission to overwrite existing files
         """
-        self._logger.info(f"Downloading {len(products)} products")
-
-        for product in products:
+        for index, product in enumerate(products):
             if isinstance(product, SecurityDataProduct):
-                self.download_security_data(product, overwrite)
+                self.download_security_data(product, overwrite_flag, index + 1, len(products))
             elif product.data_type == DataType.MapFactor:
-                self.download_map_factor(overwrite)
+                self.download_map_factor(overwrite_flag, index + 1, len(products))
             elif product.data_type == DataType.Coarse:
-                self.download_coarse(overwrite)
+                self.download_coarse(overwrite_flag, index + 1, len(products))
 
-    def download_security_data(self, product: SecurityDataProduct, overwrite: bool) -> None:
+    def download_security_data(self,
+                               product: SecurityDataProduct,
+                               overwrite_flag: bool,
+                               current_index: int,
+                               total_products: int) -> None:
         """Downloads data of a specific security.
 
         :param product: the product to download
-        :param overwrite: True if existing local files should be overwritten, False if not
+        :param overwrite_flag: whether the user has given permission to overwrite existing files
+        :param current_index: the current index of the product in the list of products
+        :param total_products: the total number of products that we're downloading
         """
         if product.resolution == QCResolution.Hour or product.resolution == QCResolution.Daily:
             dates = [None]
@@ -83,58 +87,56 @@ class DataDownloader:
             else:
                 files.append(product.get_relative_path(date, None))
 
-        self._download_files(files, overwrite)
+        self._download_files(files, overwrite_flag, current_index, total_products)
 
-    def download_map_factor(self, overwrite: bool) -> None:
+    def download_map_factor(self, overwrite_flag: bool, current_index: int, total_products: int) -> None:
         """Downloads map and factor files.
 
-        :param overwrite: True if existing local files should be overwritten, False if not
+        :param overwrite_flag: whether the user has given permission to overwrite existing files
+        :param current_index: the current index of the product in the list of products
+        :param total_products: the total number of products that we're downloading
         """
         # TODO: Download map/factor files using new API
-        self._logger.info("Downloading map and factor files")
-        pass
+        self._logger.info(f"[{current_index}/{total_products}] Downloading map and factor files")
 
-    def download_coarse(self, overwrite: bool) -> None:
+    def download_coarse(self, overwrite_flag: bool, current_index: int, total_products: int) -> None:
         """Downloads coarse universe data.
 
-        :param overwrite: True if existing local files should be overwritten, False if not
+        :param overwrite_flag: whether the user has given permission to overwrite existing files
+        :param current_index: the current index of the product in the list of products
+        :param total_products: the total number of products that we're downloading
         """
         # TODO: Download coarse universe data using new API
-        self._logger.info("Downloading coarse universe data")
-        pass
+        self._logger.info(f"[{current_index}/{total_products}] Downloading coarse universe data")
 
-    def _download_files(self, files: List[Path], overwrite: bool) -> None:
+    def _download_files(self, files: List[Path], overwrite_flag: bool, current_index: int, total_products: int) -> None:
         """Downloads files from the QuantConnect Data Library to the local data directory.
 
         The user should have already added the requested files to its QuantConnect account.
 
         :param files: the list of relative paths to download
-        :param overwrite: True if existing files should be overwritten, False if not
+        :param overwrite_flag: whether the user has given permission to overwrite existing files
+        :param current_index: the current index of the product in the list of products
+        :param total_products: the total number of products that we're downloading
         """
         data_dir = self._lean_config_manager.get_data_directory()
 
         for index, file in enumerate(files):
-            self._logger.info(f"[{index + 1}/{len(files)}] Downloading {file.as_posix()}")
-            self._download_file(file, overwrite, data_dir)
+            self._logger.info(
+                f"[{current_index}/{total_products}] [{index + 1}/{len(files)}] Downloading {file.as_posix()}")
+            self._download_file(file, overwrite_flag, data_dir)
 
-    def _download_file(self, relative_file: Path, overwrite: bool, data_directory: Path) -> None:
+    def _download_file(self, relative_file: Path, overwrite_flag: bool, data_directory: Path) -> None:
         """Downloads a single file from the QuantConnect Data Library to the local data directory.
 
         :param relative_file: the relative path to the file in the data directory
-        :param overwrite: True if existing files should be overwritten, False if not
+        :param overwrite_flag: whether the user has given permission to overwrite existing files
         :param data_directory: the path to the local data directory
         """
         local_path = data_directory / relative_file
 
-        if local_path.exists() and not overwrite:
-            self._logger.warn(f"{local_path} already exists, use --overwrite to overwrite it")
-            if self._force_overwrite is None:
-                self._force_overwrite = click.confirm(
-                    "Do you want to temporarily enable overwriting for the previously selected products?",
-                    default=False)
-
-            if not self._force_overwrite:
-                return
+        if local_path.exists() and not self._should_overwrite(overwrite_flag, local_path):
+            return
 
         # TODO: Download file using new API
         return
@@ -183,3 +185,22 @@ class DataDownloader:
 
         # Return the dates of all tradable weekdays between the start and end date excluding the holidays
         return rules.between(product.start_date, product.end_date, inc=True)
+
+    def _should_overwrite(self, overwrite_flag: bool, path: Path) -> bool:
+        """Returns whether we should overwrite existing files.
+
+        :param overwrite_flag: whether the user has given permission to overwrite existing files
+        :param path: the path to the file that already exists
+        :return: True if existing files may be overwritten, False if not
+        """
+        if overwrite_flag or self._force_overwrite:
+            return True
+
+        self._logger.warn(f"{path} already exists, use --overwrite to overwrite it")
+
+        if self._force_overwrite is None:
+            self._force_overwrite = click.confirm(
+                "Do you want to temporarily enable overwriting for the previously selected products?",
+                default=False)
+
+        return self._force_overwrite
