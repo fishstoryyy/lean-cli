@@ -208,10 +208,11 @@ def _select_products() -> List[Product]:
                                        and p.ticker == underlying_future for p in products)
 
                 if underlying_known and not underlying_added:
+                    logger.info("The underlying Futures data is required to use Future Options data.")
+                    logger.info("Without it, you will not be able to run a Future Option backtest.")
                     logger.info(
-                        "We recommend downloading data of the underlying future when downloading future option data")
-                    logger.info("This makes your local backtests more similar to the ones ran on QuantConnect")
-                    if click.confirm("Do you want to add the data of the underlying future?", default=True):
+                        "If you have your own Futures data we cannot guarantee your local backtests will match the cloud backtests.")
+                    if click.confirm("Would you like to add the underlying asset data as well?", default=True):
                         products.append(SecurityDataProduct(security_type=SecurityType.Future,
                                                             data_type=data_type,
                                                             market=market,
