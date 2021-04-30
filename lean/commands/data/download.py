@@ -26,6 +26,35 @@ from lean.models.data import DataType, OptionStyle, Product, SecurityDataProduct
 from lean.models.errors import MoreInfoError
 from lean.models.logger import Option
 
+_future_option_to_future = {
+    "OEH": "EH",
+    "OKE": "KE",
+    "OTN": "TN",
+    "OUB": "UB",
+    "OYM": "YM",
+    "OZB": "ZB",
+    "OZC": "ZC",
+    "OZF": "ZF",
+    "OZL": "ZL",
+    "OZM": "ZM",
+    "OZN": "ZN",
+    "OZO": "ZO",
+    "OZS": "ZS",
+    "OZT": "ZT",
+    "OZW": "ZW",
+    "RTO": "RTY",
+    "OG": "GC",
+    "HXE": "HG",
+    "SO": "SI",
+    "LO": "CL",
+    "HCO": "HCL",
+    "OH": "HO",
+    "ON": "NG",
+    "PAO": "PA",
+    "PO": "PL",
+    "OB": "RB"
+}
+
 
 def _display_products(products: List[Product]) -> None:
     """Previews a list of products in pretty tables.
@@ -133,7 +162,7 @@ def _select_products() -> List[Product]:
             ticker = click.prompt("Enter the ticker of the data")
 
             if security_type in [SecurityType.EquityOption, SecurityType.FutureOption, SecurityType.IndexOption]:
-                option_style = click.prompt("Select the option style of the data", [
+                option_style = logger.prompt_list("Select the option style of the data", [
                     Option(value=s, label=s.value) for s in OptionStyle.__members__.values()
                 ])
             else:
@@ -168,6 +197,30 @@ def _select_products() -> List[Product]:
                                                 end_date=end_date,
                                                 option_style=option_style,
                                                 expiry_dates_by_data_date=None))
+
+            # Future option data without the data of the underlying future isn't very useful
+            if security_type == SecurityType.FutureOption:
+                underlying_future = _future_option_to_future.get(ticker.upper(), None)
+
+                underlying_known = underlying_future is not None
+                underlying_added = any(p.security_type == SecurityType.Future
+                                       and p.data_type == data_type
+                                       and p.ticker == underlying_future for p in products)
+
+                if underlying_known and not underlying_added:
+                    logger.info(
+                        "We recommend downloading data of the underlying future when downloading future option data")
+                    logger.info("This makes your local backtests more similar to the ones ran on QuantConnect")
+                    if click.confirm("Do you want to add the data of the underlying future?", default=True):
+                        products.append(SecurityDataProduct(security_type=SecurityType.Future,
+                                                            data_type=data_type,
+                                                            market=market,
+                                                            resolution=resolution,
+                                                            ticker=underlying_future,
+                                                            start_date=start_date,
+                                                            end_date=end_date,
+                                                            option_style=None,
+                                                            expiry_dates_by_data_date=None))
 
             # Equity data requires a map and factor files subscription
             if security_type == SecurityType.Equity and not any([p.data_type == DataType.MapFactor for p in products]):
