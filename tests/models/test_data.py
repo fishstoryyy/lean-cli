@@ -214,9 +214,16 @@ def test_security_data_product_get_relative_path_returns_correct_path(security_t
                                   start_date=datetime(2020, 6, 14),
                                   end_date=datetime(2020, 6, 16),
                                   option_style=option_style,
-                                  expiry_dates_by_data_date=None)
+                                  expiry_dates_by_data_date={})
 
-    data_date = datetime(2020, 6, 15)
-    expiry_date = datetime(2020, 6, 20) if security_type == SecurityType.FutureOption else None
+    if resolution in [QCResolution.Tick, QCResolution.Second, QCResolution.Minute]:
+        data_date = datetime(2020, 6, 15)
+    else:
+        data_date = None
+
+    if security_type == SecurityType.FutureOption:
+        expiry_date = datetime(2020, 6, 20)
+    else:
+        expiry_date = None
 
     assert product.get_relative_path(data_date, expiry_date).as_posix() == result
